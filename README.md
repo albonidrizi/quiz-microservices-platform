@@ -1,70 +1,150 @@
-# Quiz Microservices Platform
+# 🧠 Quiz Microservices Platform
 
-A distributed and scalable **Quiz Application** built using **Spring Boot** and **Spring Cloud** with **PostgreSQL** as the database. The platform is built with a microservices architecture, leveraging **Eureka** for service discovery, **Feign** for inter-service communication, and an **API Gateway** to route all incoming requests.
+![Java CI with Maven](https://github.com/albonidrizi/quiz-microservices-platform/actions/workflows/maven.yml/badge.svg)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.4-brightgreen)
+![React](https://img.shields.io/badge/React-18-blue)
+![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED)
+![Tests](https://img.shields.io/badge/Tests-Passing-success)
 
-## 🚀 Features
+A production-grade, distributed **Quiz Application** designed to demonstrate **Senior Cloud-Native Java** capabilities.
+This project transitions a traditional monolithic logic into a robust **Microservices Architecture**, featuring centralized configuration, service discovery, distributed tracing, fault tolerance, and a modern frontend.
 
-- **Microservices Architecture**: Each service runs independently and can be scaled individually.
-- **PostgreSQL Database**: Reliable data storage for all quiz questions and results.
-- **Service Discovery with Eureka**: Dynamic registration and discovery of services in a distributed environment.
-- **API Gateway**: Centralized routing of requests to various microservices.
-- **Feign Client**: Simplified HTTP communication between microservices.
+---
 
-## 🛠️ Tech Stack
+## 🏗️ Architecture Design
 
-- **Java 17**: Latest version of Java for modern development.
-- **Spring Boot 3**: Framework for building production-ready applications.
-- **Spring Cloud**: Including **Eureka**, **Feign**, and **API Gateway**.
-- **PostgreSQL**: Relational database for storing quiz-related data.
-- **Docker** (optional): Containerization of microservices for easy deployment.
+The system is composed of loosely coupled services that communicate via REST (Synchronous) and are orchestrated using Docker.
 
-## 🌐 Microservices Overview
+```mermaid
+graph TD
+    subgraph Client Layer
+        User([👤 User])
+        Frontend[⚛️ React Frontend]
+    end
 
-### 1. `service-registry` (Eureka Server)
+    subgraph Infrastructure Layer
+        Gateway[🚪 API Gateway]
+        Registry[®️ Eureka Server]
+        Zipkin[️️🕵️‍♂️ Zipkin Tracing]
+    end
 
-Handles the registration and discovery of services in the system. Services communicate with each other dynamically without needing hard-coded URLs.
+    subgraph Service Layer
+        Quiz[🧠 Quiz Service]
+        Question[❓ Question Service]
+    end
 
-- **Eureka Server** for service registration and discovery.
-  
-### 2. `question-service`
+    subgraph Data Layer
+        DB[(🐘 PostgreSQL)]
+    end
 
-Manages all quiz-related questions and answers. It exposes CRUD endpoints to create, update, retrieve, and delete quiz questions.
+    User -->|Interacts| Frontend
+    Frontend -->|HTTP/REST| Gateway
+    
+    Gateway -->|Service Discovery| Registry
+    Gateway -->|Route /quiz/**| Quiz
+    Gateway -->|Route /question/**| Question
 
-- **PostgreSQL** database for storing questions and answers.
-  
-### 3. `quiz-service`
+    Quiz -->|Feign Client (Sync)| Question
+    Quiz -->|Read/Write| DB
+    Question -->|Read/Write| DB
 
-Responsible for generating quizzes and evaluating answers. It consumes data from the `question-service` and calculates the results for the quizzes.
+    %% Observability Connections
+    Quiz -.->|Trace Data| Zipkin
+    Question -.->|Trace Data| Zipkin
+    Gateway -.->|Trace Data| Zipkin
+```
 
-- **Feign Client** to call `question-service` for retrieving questions.
+## 🚀 Key Features
 
-### 4. `api-gateway`
+### 🛡️ Resilience & Fault Tolerance
+*   **Circuit Breaker (Resilience4j)**: Implemented in `quiz-service`. If `question-service` experiences high latency or downtime, the system fails gracefully instead of cascading errors.
+*   **Fallback Mechanism**: Default responses are provided when dependent services are unavailable.
 
-Acts as the entry point for all client requests. It routes the requests to the appropriate microservice (either `question-service` or `quiz-service`).
+### 🕵️‍♂️ Observability & Monitoring
+*   **Distributed Tracing**: Integrated **Zipkin** and **Micrometer** to assign unique Trace IDs to requests. This allows valid debugging across service boundaries.
+*   **Centralized Logging**: Logs can be aggregated (ready for ELK stack).
+*   **Health Checks**: Spring Boot Actuator endpoints (`/actuator/health`) exposed for Kubernetes/Docker health probes.
 
-- **Spring Cloud Gateway** for routing requests.
+### 🧪 Advanced Testing Strategies
+*   **Integration Testing**: Uses **Testcontainers** to spin up ephemeral PostgreSQL instances for real-world database testing, avoiding the pitfalls of in-memory H2 databases.
+*   **Unit Testing**: JUnit 5 and Mockito for isolated business logic validation.
 
-## 🏁 Getting Started
+### ⚡ DevOps & CI/CD
+*   **Containerization**: Multi-stage Docker builds for optimized, small-footprint images (Alpine Linux).
+*   **Infrastructure as Code**: `docker-compose.yml` orchestrates the entire stack (Database, Services, UI, Tracing).
+*   **GitHub Actions**: Automated pipeline triggers on every push to build, test, and verify the codebase.
+
+---
+
+## 🛠️ Technology Stack
+
+| Category | Technology | Decision Rationale |
+| :--- | :--- | :--- |
+| **Backend** | Java 17, Spring Boot 3 | LTS version for stability; Spring Ecosystem for rapid cloud-native dev. |
+| **Microservices** | Spring Cloud (Eureka, Gateway, OpenFeign) | The standard for Java-based distributed systems. |
+| **Frontend** | React (Vite), TypeScript, Tailwind CSS | Modern, type-safe, and highly performant UI development. |
+| **Database** | PostgreSQL | Robust, ACID-compliant relational testing. |
+| **Resilience** | Resilience4j | Lightweight fault tolerance library designed for Java 8+. |
+| **Testing** | Testcontainers, JUnit 5, Mockito | "Shift-Left" quality assurance with real environment simulation. |
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
+*   **Docker Desktop** (Engine 20.10+)
+*   **Java 17 JDK** (optional, for local dev)
+*   **Node.js 18+** (optional, for local frontend dev)
 
-Make sure you have the following installed on your machine:
+### One-Click Deployment 🐳
+The entire platform (Frontend + Backend + DB) can be launched with a single command:
 
-- Java 17 or higher
-- PostgreSQL (or use Docker to run PostgreSQL)
-- Maven or Gradle (to build the project)
+```bash
+docker-compose up -d --build
+docker-compose up -d --build
+```
 
+### 🛠️ Troubleshooting & Setup
 
-📊 Project Structure
+#### 1. Database Seeding (Required for Initial Run)
+The database starts empty. To populate it with questions (Java, Python, JS, Docker), run the following command after starting the containers:
+
+```bash
+Get-Content ./init-scripts/02-seed-data.sql | docker exec -i postgres psql -U postgres -d questiondb
+```
+
+#### 2. Service Stability
+The `docker-compose.yml` is configured with `restart: on-failure` to handle database startup delays. If services (like `quiz-service`) appear down initially, they will automatically recover within 30 seconds.
+
+### Access Points
+| Service | URL | Creds/Info |
+| :--- | :--- | :--- |
+| **Frontend App** | [http://localhost:3000](http://localhost:3000) | Main UI |
+| **API Gateway** | [http://localhost:8765](http://localhost:8765) | Entry point for APIs |
+| **Eureka Dashboard** | [http://localhost:8761](http://localhost:8761) | Service Registry View |
+| **Zipkin Tracing** | [http://localhost:9411](http://localhost:9411) | Trace Visualizer |
+| **Swagger (Quiz)** | [http://localhost:8090/swagger-ui.html](http://localhost:8090/swagger-ui.html) | API Docs |
+
+---
+
+## 📂 Project Structure
+
+```bash
 quiz-microservices-platform/
-│
-├── api-gateway/          # API Gateway that routes requests
-├── question-service/     # Service responsible for managing questions
-├── quiz-service/         # Service responsible for quiz generation and evaluation
-├── service-registry/     # Eureka Service Registry
-└── README.md             # Project documentation
+├── api-gateway/          # 🚪 Entry point & Routing
+├── frontend/             # ⚛️ React + Tailwind UI
+├── question-service/     # ❓ Domain service for Questions
+├── quiz-service/         # 🧠 Domain service for Quizzes
+├── service-registry/     # ®️ Service Discovery Server
+├── docker-compose.yml    # 🐳 Orchestration Config
+└── .github/workflows/    # 🤖 CI/CD Pipeline
+```
 
-📅 Future Improvements
-- Implement user authentication (JWT).
-- Add unit and integration tests.
-- Containerize using Docker and deploy to a cloud platform (e.g., AWS or Azure).
+## 🔮 Future Roadmap
+*   **Security**: Implement OAuth2/OIDC with Keycloak.
+*   **Event-Driven Architecture**: Introduce RabbitMQ/Kafka for asynchronous quiz submission.
+*   **Kubernetes (K8s)**: Create Helm charts for cluster deployment.
+
+---
+
+Made with ❤️ by **Albon Idrizi**

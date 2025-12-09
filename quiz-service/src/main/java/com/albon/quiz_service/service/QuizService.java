@@ -1,7 +1,5 @@
 package com.albon.quiz_service.service;
 
-
-
 import com.albon.quiz_service.dao.QuizDao;
 import com.albon.quiz_service.feign.QuizInterface;
 import com.albon.quiz_service.model.QuestionWrapper;
@@ -23,24 +21,28 @@ public class QuizService {
     @Autowired
     QuizInterface quizInterface;
 
-
-    public ResponseEntity<String> createQuiz(String category, int numQ, String title) {
+    @io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker(name = "question-service", fallbackMethod = "createQuizFallback")
+    public ResponseEntity<Quiz> createQuiz(String category, int numQ, String title) {
 
         List<Integer> questions = quizInterface.getQuestionsForQuiz(category, numQ).getBody();
         Quiz quiz = new Quiz();
         quiz.setTitle(title);
         quiz.setQuestionIds(questions);
-        quizDao.save(quiz);
+        Quiz savedQuiz = quizDao.save(quiz);
 
-        return new ResponseEntity<>("Success", HttpStatus.CREATED);
+        return new ResponseEntity<>(savedQuiz, HttpStatus.CREATED);
 
     }
 
+    public ResponseEntity<Quiz> createQuizFallback(String category, int numQ, String title, Throwable t) {
+        return new ResponseEntity<>(null, HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
     public ResponseEntity<List<QuestionWrapper>> getQuizQuestions(Integer id) {
-          Quiz quiz = quizDao.findById(id).get();
-          List<Integer> questionIds = quiz.getQuestionIds();
-          ResponseEntity<List<QuestionWrapper>> questions = quizInterface.getQuestionsFromId(questionIds);
-          return questions;
+        Quiz quiz = quizDao.findById(id).get();
+        List<Integer> questionIds = quiz.getQuestionIds();
+        ResponseEntity<List<QuestionWrapper>> questions = quizInterface.getQuestionsFromId(questionIds);
+        return questions;
 
     }
 

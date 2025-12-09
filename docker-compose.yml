@@ -1,0 +1,108 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: on-failure
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 121212
+      POSTGRES_DB: quizdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - quiz-network
+
+  service-registry:
+    build: ./service-registry
+    container_name: service-registry
+    restart: on-failure
+    ports:
+      - "8761:8761"
+    environment:
+      - EUREKA_HOST=service-registry
+    networks:
+      - quiz-network
+
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    restart: on-failure
+    ports:
+      - "9411:9411"
+    networks:
+      - quiz-network
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend
+    restart: on-failure
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - quiz-network
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    restart: on-failure
+    ports:
+      - "8765:8765"
+    environment:
+      - EUREKA_HOST=service-registry
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+    depends_on:
+      - service-registry
+      - zipkin
+    networks:
+      - quiz-network
+
+  question-service:
+    build: ./question-service
+    container_name: question-service
+    restart: on-failure
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=121212
+      - EUREKA_HOST=service-registry
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+    depends_on:
+      - postgres
+      - service-registry
+      - zipkin
+    networks:
+      - quiz-network
+
+  quiz-service:
+    build: ./quiz-service
+    container_name: quiz-service
+    restart: on-failure
+    ports:
+      - "8090:8090"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=121212
+      - EUREKA_HOST=service-registry
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+    depends_on:
+      - postgres
+      - service-registry
+      - zipkin
+    networks:
+      - quiz-network
+
+networks:
+  quiz-network:
+    driver: bridge
+
+volumes:
+  postgres-data:

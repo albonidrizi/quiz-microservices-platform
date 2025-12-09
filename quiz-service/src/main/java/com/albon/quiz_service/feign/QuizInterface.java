@@ -10,11 +10,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 
-@FeignClient("QUESTION-SERVICE")
+@FeignClient("question-service")
 public interface QuizInterface {
     @GetMapping("question/generate")
-    ResponseEntity<List<Integer>> getQuestionsForQuiz
-            (@RequestParam String categoryName, @RequestParam Integer numQuestions );
+    ResponseEntity<List<Integer>> getQuestionsForQuiz(@RequestParam String categoryName,
+            @RequestParam Integer numQuestions);
 
     @PostMapping("question/getQuestions")
     ResponseEntity<List<QuestionWrapper>> getQuestionsFromId(@RequestBody List<Integer> questionIds);

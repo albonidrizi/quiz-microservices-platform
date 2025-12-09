@@ -14,7 +14,7 @@ public class Quiz {
     private Integer id;
     private String title;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     private List<Integer> questionIds;
 
 }

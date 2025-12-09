@@ -1,6 +1,5 @@
 package com.albon.quiz_service.controller;
 
-
 import com.albon.quiz_service.model.QuestionWrapper;
 import com.albon.quiz_service.model.QuizDto;
 import com.albon.quiz_service.model.Response;
@@ -19,19 +18,18 @@ public class QuizController {
     QuizService quizService;
 
     @PostMapping("create")
-    public ResponseEntity<String> createQuiz(@RequestBody QuizDto quizDto){
+    public ResponseEntity<com.albon.quiz_service.model.Quiz> createQuiz(@RequestBody QuizDto quizDto) {
         return quizService.createQuiz(quizDto.getCategoryName(), quizDto.getNumQuestions(), quizDto.getTitle());
     }
 
     @GetMapping("get/{id}")
-    public ResponseEntity<List<QuestionWrapper>> getQuizQuestions(@PathVariable Integer id){
+    public ResponseEntity<List<QuestionWrapper>> getQuizQuestions(@PathVariable Integer id) {
         return quizService.getQuizQuestions(id);
     }
 
     @PostMapping("submit/{id}")
-    public ResponseEntity<Integer> submitQuiz(@PathVariable Integer id, @RequestBody List<Response> responses){
+    public ResponseEntity<Integer> submitQuiz(@PathVariable Integer id, @RequestBody List<Response> responses) {
         return quizService.calculateResult(id, responses);
     }
-
 
 }
