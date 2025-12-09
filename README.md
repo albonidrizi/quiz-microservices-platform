@@ -44,7 +44,7 @@ graph TD
     Gateway -->|Route /quiz/**| Quiz
     Gateway -->|Route /question/**| Question
 
-    Quiz -->|Feign Client (Sync)| Question
+    Quiz -->|Feign Client Sync| Question
     Quiz -->|Read/Write| DB
     Question -->|Read/Write| DB
 
