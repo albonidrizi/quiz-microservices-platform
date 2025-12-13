@@ -1,0 +1,72 @@
+# IDE & Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.iml
+
+# Build & Compilation
+target/
+build/
+dist/
+node_modules/
+*.class
+*.jar
+*.war
+*.zip
+
+# Environment & Credentials
+.env
+.env.local
+.env.*.local
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Personal & CV Files
+CV/
+cv/
+resume/
+Resume/
+*.pdf
+personal/
+private/
+
+# Maven
+.m2/
+*.pom.bak
+
+# Node
+.npm/
+package-lock.json
+yarn.lock
+
+# Docker
+.dockerignore
+
+# IntelliJ
+*.iws
+*.ipr
+.idea_modules/
+
+# OS Specific
+.directory
+.Spotlight-V100
+.Trashes
+._*
