@@ -42,6 +42,13 @@ public class QuizServiceTest {
         when(quizInterface.getQuestionsForQuiz(anyString(), anyInt()))
                 .thenReturn(new ResponseEntity<>(questions, HttpStatus.OK));
 
+        // Mock the save method
+        Quiz mockQuiz = new Quiz();
+        mockQuiz.setId(1);
+        mockQuiz.setTitle("Java Basics");
+        mockQuiz.setQuestionIds(questions);
+        when(quizDao.save(any(Quiz.class))).thenReturn(mockQuiz);
+
         // Calling the method under test
         ResponseEntity<Quiz> response = quizService.createQuiz("Java", 5, "Java Basics");
 

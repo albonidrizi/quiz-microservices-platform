@@ -35,7 +35,7 @@ public class QuizService {
     }
 
     public ResponseEntity<Quiz> createQuizFallback(String category, int numQ, String title, Throwable t) {
-        return new ResponseEntity<>(null, HttpStatus.SERVICE_UNAVAILABLE);
+        return new ResponseEntity<>(new Quiz(), HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     public ResponseEntity<List<QuestionWrapper>> getQuizQuestions(Integer id) {
