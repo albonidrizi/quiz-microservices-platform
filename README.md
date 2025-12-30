@@ -56,11 +56,15 @@ graph TD
 
 ## 🚀 Key Features
 
-### 🛡️ Resilience & Fault Tolerance
-*   **Circuit Breaker (Resilience4j)**: Implemented in `quiz-service`. If `question-service` experiences high latency or downtime, the system fails gracefully instead of cascading errors.
-*   **Fallback Mechanism**: Default responses are provided when dependent services are unavailable.
+### 🛡️ Resilience & Security
+*   **Rate Limiting (Redis)**: Protects the API Gateway from abuse (limited to 10 req/s per user).
+*   **Secure Credentials**: No more hardcoded passwords! Uses `.env` configuration.
+*   **Circuit Breaker (Resilience4j)**: Fails gracefully if a service is down.
+*   **Data Protection**: API Responses now use DTOs to ensure correct answers are *never* leaked to the client.
 
 ### 🕵️‍♂️ Observability & Monitoring
+*   **Distributed Tracing**: Integrated **Zipkin** and **Micrometer**.
+*   **Centralized Logging**: Logs can be aggregated (ready for ELK stack).
 *   **Distributed Tracing**: Integrated **Zipkin** and **Micrometer** to assign unique Trace IDs to requests. This allows valid debugging across service boundaries.
 *   **Centralized Logging**: Logs can be aggregated (ready for ELK stack).
 *   **Health Checks**: Spring Boot Actuator endpoints (`/actuator/health`) exposed for Kubernetes/Docker health probes.

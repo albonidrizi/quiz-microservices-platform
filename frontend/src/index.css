@@ -1,5 +1,40 @@
 @import "tailwindcss";
 
+@theme {
+  --color-glass-surface: rgba(255, 255, 255, 0.05);
+  --color-glass-border: rgba(255, 255, 255, 0.1);
+  --color-neon-blue: #00f3ff;
+  --color-neon-purple: #bc13fe;
+}
+
 body {
-    background-color: #f3f4f6; /* gray-100 */
+    background: radial-gradient(circle at 50% -20%, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+}
+
+.glass-panel {
+    background: var(--color-glass-surface);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--color-glass-border);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.glass-button {
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+    border: 1px solid rgba(255,255,255,0.2);
+    backdrop-filter: blur(4px);
+    transition: all 0.3s ease;
+}
+
+.glass-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+    border-color: var(--color-neon-blue);
+}
+
+.neon-text {
+    text-shadow: 0 0 10px rgba(0, 243, 255, 0.5), 0 0 20px rgba(188, 19, 254, 0.3);
 }
