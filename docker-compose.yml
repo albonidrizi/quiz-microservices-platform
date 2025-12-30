@@ -4,9 +4,9 @@ services:
     container_name: postgres
     restart: on-failure
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 121212
-      POSTGRES_DB: quizdb
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-121212}
+      POSTGRES_DB: ${POSTGRES_DB:-quizdb}
     ports:
       - "5432:5432"
     volumes:
@@ -35,6 +35,14 @@ services:
     networks:
       - quiz-network
 
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - quiz-network
+
   frontend:
     build:
       context: ./frontend
@@ -55,10 +63,12 @@ services:
       - "8765:8765"
     environment:
       - EUREKA_HOST=service-registry
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=${ZIPKIN_URI:-http://zipkin:9411/api/v2/spans}
+      - SPRING_DATA_REDIS_HOST=redis
     depends_on:
       - service-registry
       - zipkin
+      - redis
     networks:
       - quiz-network
 
@@ -69,10 +79,10 @@ services:
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=121212
+      - DB_USERNAME=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-121212}
       - EUREKA_HOST=service-registry
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=${ZIPKIN_URI:-http://zipkin:9411/api/v2/spans}
     depends_on:
       - postgres
       - service-registry
@@ -89,10 +99,10 @@ services:
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=121212
+      - DB_USERNAME=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-121212}
       - EUREKA_HOST=service-registry
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=${ZIPKIN_URI:-http://zipkin:9411/api/v2/spans}
     depends_on:
       - postgres
       - service-registry

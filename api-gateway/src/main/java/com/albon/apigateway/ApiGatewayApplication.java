@@ -11,6 +11,12 @@ public class ApiGatewayApplication {
 	}
 
 	@org.springframework.context.annotation.Bean
+	public org.springframework.cloud.gateway.filter.ratelimit.KeyResolver userKeyResolver() {
+		return exchange -> reactor.core.publisher.Mono
+				.just(exchange.getRequest().getRemoteAddress().getAddress().getHostAddress());
+	}
+
+	@org.springframework.context.annotation.Bean
 	public org.springframework.web.cors.reactive.CorsWebFilter corsWebFilter() {
 		org.springframework.web.cors.CorsConfiguration corsConfig = new org.springframework.web.cors.CorsConfiguration();
 		corsConfig.setAllowedOrigins(java.util.Arrays.asList("http://localhost:3000"));
