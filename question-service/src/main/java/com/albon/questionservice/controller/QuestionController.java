@@ -1,9 +1,9 @@
 package com.albon.questionservice.controller;
 
-
 import com.albon.questionservice.model.Question;
 import com.albon.questionservice.model.QuestionWrapper;
 import com.albon.questionservice.model.Response;
+import com.albon.questionservice.model.QuestionDTO;
 import com.albon.questionservice.service.QuestionService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,33 +24,31 @@ public class QuestionController {
     Environment environment;
 
     @GetMapping("allQuestions")
-    public ResponseEntity<List<Question>> getAllQuestions(){
+    public ResponseEntity<List<QuestionDTO>> getAllQuestions() {
         return questionService.getAllQuestions();
     }
 
     @GetMapping("category/{category}")
-    public ResponseEntity<List<Question>> getQuestionsByCategory(@PathVariable String category){
+    public ResponseEntity<List<QuestionDTO>> getQuestionsByCategory(@PathVariable String category) {
         return questionService.getQuestionsByCategory(category);
     }
 
     @PostMapping("add")
-    public ResponseEntity<String> addQuestion(@RequestBody Question question){
-        return  questionService.addQuestion(question);
+    public ResponseEntity<String> addQuestion(@RequestBody Question question) {
+        return questionService.addQuestion(question);
     }
 
-
     @GetMapping("generate")
-    public ResponseEntity<List<Integer>> getQuestionsForQuiz
-            (@RequestParam String categoryName, @RequestParam Integer numQuestions ){
+    public ResponseEntity<List<Integer>> getQuestionsForQuiz(@RequestParam String categoryName,
+            @RequestParam Integer numQuestions) {
         return questionService.getQuestionsForQuiz(categoryName, numQuestions);
     }
 
     @PostMapping("getQuestions")
-    public ResponseEntity<List<QuestionWrapper>> getQuestionsFromId(@RequestBody List<Integer> questionIds){
+    public ResponseEntity<List<QuestionWrapper>> getQuestionsFromId(@RequestBody List<Integer> questionIds) {
         System.out.println(environment.getProperty("local.server.port"));
         return questionService.getQuestionsFromId(questionIds);
     }
-
 
     @PostMapping("getScore")
     public ResponseEntity<Integer> getScore(@RequestBody List<Response> responses) {
