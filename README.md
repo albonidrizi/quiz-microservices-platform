@@ -84,7 +84,7 @@ graph TD
 
 | Category | Technology | Decision Rationale |
 | :--- | :--- | :--- |
-| **Backend** | Java 17, Spring Boot 3 | LTS version for stability; Spring Ecosystem for rapid cloud-native dev. |
+| **Backend** | Java 21, Spring Boot 3 | LTS version for stability; Spring Ecosystem for rapid cloud-native dev. |
 | **Microservices** | Spring Cloud (Eureka, Gateway, OpenFeign) | The standard for Java-based distributed systems. |
 | **Frontend** | React (Vite), TypeScript, Tailwind CSS | Modern, type-safe, and highly performant UI development. |
 | **Database** | PostgreSQL | Robust, ACID-compliant relational testing. |
@@ -97,7 +97,7 @@ graph TD
 
 ### Prerequisites
 *   **Docker Desktop** (Engine 20.10+)
-*   **Java 17 JDK** (optional, for local dev)
+*   **Java 21 JDK** (optional, for local dev and matching runtime targets)
 *   **Node.js 18+** (optional, for local frontend dev)
 
 ### One-Click Deployment 🐳
