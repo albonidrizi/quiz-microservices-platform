@@ -1,98 +1,99 @@
 package com.albon.questionservice.service;
 
 import com.albon.questionservice.dao.QuestionDao;
+import com.albon.questionservice.exception.InvalidRequestException;
+import com.albon.questionservice.exception.ResourceNotFoundException;
+import com.albon.questionservice.model.CreateQuestionRequest;
 import com.albon.questionservice.model.Question;
 import com.albon.questionservice.model.QuestionWrapper;
 import com.albon.questionservice.model.Response;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.albon.questionservice.model.QuestionDTO;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class QuestionService {
-    @Autowired
-    QuestionDao questionDao;
+    private final QuestionDao questionDao;
 
-    public ResponseEntity<List<QuestionDTO>> getAllQuestions() {
-        try {
-            List<Question> questions = questionDao.findAll();
-            List<QuestionDTO> questionDTOS = new ArrayList<>();
-            for (Question q : questions) {
-                QuestionDTO questionDTO = new QuestionDTO(q.getId(), q.getQuestionTitle(), q.getOption1(),
-                        q.getOption2(), q.getOption3(), q.getOption4(), q.getDifficultylevel(), q.getCategory());
-                questionDTOS.add(questionDTO);
-            }
-            return new ResponseEntity<>(questionDTOS, HttpStatus.OK);
-        } catch (Exception e) {
-            e.printStackTrace();
+    public QuestionService(QuestionDao questionDao) {
+        this.questionDao = questionDao;
+    }
+
+    public List<QuestionDTO> getAllQuestions() {
+        return questionDao.findAll().stream().map(this::toDto).toList();
+    }
+
+    public List<QuestionDTO> getQuestionsByCategory(String category) {
+        return questionDao.findByCategory(category).stream().map(this::toDto).toList();
+    }
+
+    public QuestionDTO addQuestion(CreateQuestionRequest request) {
+        List<String> options = List.of(request.option1(), request.option2(), request.option3(), request.option4());
+        if (!options.contains(request.rightAnswer())) {
+            throw new InvalidRequestException("rightAnswer must match one of the provided options");
         }
-        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.BAD_REQUEST);
+        Question question = new Question(null, request.questionTitle(), request.option1(), request.option2(),
+                request.option3(), request.option4(), request.rightAnswer(), request.difficultylevel(),
+                request.category());
+        return toDto(questionDao.save(question));
     }
 
-    public ResponseEntity<List<QuestionDTO>> getQuestionsByCategory(String category) {
-        try {
-            List<Question> questions = questionDao.findByCategory(category);
-            List<QuestionDTO> questionDTOS = new ArrayList<>();
-            for (Question q : questions) {
-                QuestionDTO questionDTO = new QuestionDTO(q.getId(), q.getQuestionTitle(), q.getOption1(),
-                        q.getOption2(), q.getOption3(), q.getOption4(), q.getDifficultylevel(), q.getCategory());
-                questionDTOS.add(questionDTO);
-            }
-            return new ResponseEntity<>(questionDTOS, HttpStatus.OK);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.BAD_REQUEST);
-
-    }
-
-    public ResponseEntity<String> addQuestion(Question question) {
-        questionDao.save(question);
-        return new ResponseEntity<>("success", HttpStatus.CREATED);
-    }
-
-    public ResponseEntity<List<Integer>> getQuestionsForQuiz(String categoryName, Integer numQuestions) {
+    public List<Integer> getQuestionsForQuiz(String categoryName, Integer numQuestions) {
         List<Integer> questions = questionDao.findRandomQuestionsByCategory(categoryName, numQuestions);
-        return new ResponseEntity<>(questions, HttpStatus.OK);
+        if (questions.isEmpty()) {
+            throw new ResourceNotFoundException("No questions found for category " + categoryName);
+        }
+        if (questions.size() < numQuestions) {
+            throw new InvalidRequestException("Only " + questions.size()
+                    + " questions are available for category " + categoryName);
+        }
+        return questions;
     }
 
-    public ResponseEntity<List<QuestionWrapper>> getQuestionsFromId(List<Integer> questionIds) {
-        List<QuestionWrapper> wrappers = new ArrayList<>();
-        List<Question> questions = new ArrayList<>();
-
-        for (Integer id : questionIds) {
-            questions.add(questionDao.findById(id).get());
+    public List<QuestionWrapper> getQuestionsFromId(List<Integer> questionIds) {
+        if (questionIds == null || questionIds.isEmpty()) {
+            throw new InvalidRequestException("At least one question id is required");
         }
-
-        for (Question question : questions) {
-            QuestionWrapper wrapper = new QuestionWrapper();
-            wrapper.setId(question.getId());
-            wrapper.setQuestionTitle(question.getQuestionTitle());
-            wrapper.setOption1(question.getOption1());
-            wrapper.setOption2(question.getOption2());
-            wrapper.setOption3(question.getOption3());
-            wrapper.setOption4(question.getOption4());
-            wrappers.add(wrapper);
-        }
-
-        return new ResponseEntity<>(wrappers, HttpStatus.OK);
+        return questionIds.stream().map(this::findQuestion).map(this::toWrapper).toList();
     }
 
-    public ResponseEntity<Integer> getScore(List<Response> responses) {
-
+    public int getScore(List<Response> responses) {
+        if (responses == null || responses.isEmpty()) {
+            throw new InvalidRequestException("At least one response is required");
+        }
         int right = 0;
+        Set<Integer> seenQuestionIds = new HashSet<>();
 
         for (Response response : responses) {
-            Question question = questionDao.findById(response.getId()).get();
+            if (response == null || response.getId() == null || response.getResponse() == null) {
+                throw new InvalidRequestException("Every response must include a question id and answer");
+            }
+            if (!seenQuestionIds.add(response.getId())) {
+                throw new InvalidRequestException("Duplicate response for question " + response.getId());
+            }
+            Question question = findQuestion(response.getId());
             if (response.getResponse().equals(question.getRightAnswer()))
                 right++;
         }
-        return new ResponseEntity<>(right, HttpStatus.OK);
+        return right;
     }
 
+    private Question findQuestion(Integer id) {
+        return questionDao.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Question " + id + " was not found"));
+    }
+
+    private QuestionDTO toDto(Question question) {
+        return new QuestionDTO(question.getId(), question.getQuestionTitle(), question.getOption1(),
+                question.getOption2(), question.getOption3(), question.getOption4(), question.getDifficultylevel(),
+                question.getCategory());
+    }
+
+    private QuestionWrapper toWrapper(Question question) {
+        return new QuestionWrapper(question.getId(), question.getQuestionTitle(), question.getOption1(),
+                question.getOption2(), question.getOption3(), question.getOption4());
+    }
 }

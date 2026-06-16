@@ -1,13 +1,13 @@
-# Build Stage
-FROM node:18-alpine as build
+FROM node:22-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 COPY . .
-RUN npm run build
+RUN npm run lint && npm run build
 
-# Production Stage
-FROM nginx:alpine
+FROM nginxinc/nginx-unprivileged:alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 8080
+HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=5 \
+  CMD wget -q -O /dev/null http://127.0.0.1:8080/health || exit 1

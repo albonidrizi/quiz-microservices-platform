@@ -55,11 +55,9 @@ private/
 
 # Node
 .npm/
-package-lock.json
 yarn.lock
 
 # Docker
-.dockerignore
 
 # IntelliJ
 *.iws

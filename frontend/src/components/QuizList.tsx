@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../utils';
+import { api, getApiErrorMessage } from '../utils';
 import { motion } from 'framer-motion';
 import { Code2, Hash, Play, Sparkles } from 'lucide-react';
 
@@ -17,9 +17,11 @@ export default function QuizList() {
     const [title, setTitle] = useState("");
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleCreate = async () => {
         setLoading(true);
+        setError(null);
         try {
             const response = await api.post('quiz/create', {
                 categoryName: selectedCategory,
@@ -28,8 +30,7 @@ export default function QuizList() {
             });
             navigate(`/play/${response.data.id}`);
         } catch (error) {
-            console.error(error);
-            alert("Failed to create quiz");
+            setError(getApiErrorMessage(error, "Could not create the quiz. Please try again."));
         } finally {
             setLoading(false);
         }
@@ -56,16 +57,18 @@ export default function QuizList() {
 
                 <div className="grid grid-cols-2 gap-4">
                     {categories.map((cat) => (
-                        <div
+                        <button
+                            type="button"
                             key={cat.name}
                             onClick={() => setSelectedCategory(cat.name)}
-                            className={`p-4 rounded-xl cursor-pointer border transition-all duration-300 ${selectedCategory === cat.name ? 'border-cyan-400 bg-white/10 shadow-lg shadow-cyan-500/20' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
+                            aria-pressed={selectedCategory === cat.name}
+                            className={`p-4 rounded-xl cursor-pointer border text-left transition-all duration-300 ${selectedCategory === cat.name ? 'border-cyan-400 bg-white/10 shadow-lg shadow-cyan-500/20' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
                         >
                             <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${cat.color} flex items-center justify-center mb-3 shadow-lg`}>
                                 {cat.icon}
                             </div>
                             <h3 className="font-bold text-lg">{cat.name}</h3>
-                        </div>
+                        </button>
                     ))}
                 </div>
             </div>
@@ -93,8 +96,9 @@ export default function QuizList() {
                     <div>
                         <label className="block text-gray-400 text-sm font-medium mb-2">Number of Questions</label>
                         <div className="flex gap-2">
-                            {[3, 5, 10].map(n => (
+                            {[3, 5].map(n => (
                                 <button
+                                    type="button"
                                     key={n}
                                     onClick={() => setNumQ(n)}
                                     className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${numQ === n ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
@@ -111,15 +115,23 @@ export default function QuizList() {
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
+                            maxLength={255}
                             className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500 transition-colors"
                             placeholder="e.g. Daily Drill"
                         />
                     </div>
 
+                    {error ? (
+                        <p role="alert" className="rounded-xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-200">
+                            {error}
+                        </p>
+                    ) : null}
+
                     <button
+                        type="button"
                         onClick={handleCreate}
                         disabled={loading}
-                        className="w-full relative group overflow-hidden bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl py-4 font-bold text-lg shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all transform hover:scale-[1.02]"
+                        className="w-full relative group overflow-hidden bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl py-4 font-bold text-lg shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         <span className="relative z-10 flex items-center justify-center gap-2">
                             {loading ? 'Initializing Engine...' : <>Start Challenge <Play className="w-5 h-5 fill-current" /></>}

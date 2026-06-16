@@ -11,5 +11,16 @@ export interface QuestionWrapper {
 }
 
 export const api = axios.create({
-    baseURL: 'http://localhost:8765' // Gateway URL
+    baseURL: '/api',
+    timeout: 10_000,
+    headers: {
+        'Content-Type': 'application/json',
+    },
 });
+
+export function getApiErrorMessage(error: unknown, fallback: string): string {
+    if (axios.isAxiosError<{ message?: string }>(error)) {
+        return error.response?.data?.message ?? fallback;
+    }
+    return fallback;
+}

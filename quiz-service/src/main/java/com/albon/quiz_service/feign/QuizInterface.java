@@ -1,5 +1,6 @@
 package com.albon.quiz_service.feign;
 
+import com.albon.quiz_service.config.FeignClientConfig;
 import com.albon.quiz_service.model.QuestionWrapper;
 import com.albon.quiz_service.model.Response;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 
-@FeignClient("question-service")
+@FeignClient(name = "question-service", configuration = FeignClientConfig.class)
 public interface QuizInterface {
     @GetMapping("question/generate")
     ResponseEntity<List<Integer>> getQuestionsForQuiz(@RequestParam String categoryName,

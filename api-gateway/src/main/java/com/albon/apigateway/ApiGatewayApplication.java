@@ -1,7 +1,12 @@
 package com.albon.apigateway;
 
+import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import reactor.core.publisher.Mono;
+
+import java.net.InetSocketAddress;
 
 @SpringBootApplication
 public class ApiGatewayApplication {
@@ -10,23 +15,18 @@ public class ApiGatewayApplication {
 		SpringApplication.run(ApiGatewayApplication.class, args);
 	}
 
-	@org.springframework.context.annotation.Bean
-	public org.springframework.cloud.gateway.filter.ratelimit.KeyResolver userKeyResolver() {
-		return exchange -> reactor.core.publisher.Mono
-				.just(exchange.getRequest().getRemoteAddress().getAddress().getHostAddress());
+	@Bean
+	public KeyResolver userKeyResolver() {
+		return exchange -> {
+			String forwardedFor = exchange.getRequest().getHeaders().getFirst("X-Forwarded-For");
+			if (forwardedFor != null && !forwardedFor.isBlank()) {
+				return Mono.just(forwardedFor.split(",")[0].trim());
+			}
+
+			InetSocketAddress remoteAddress = exchange.getRequest().getRemoteAddress();
+			String key = remoteAddress == null ? "unknown" : remoteAddress.getAddress().getHostAddress();
+			return Mono.just(key);
+		};
 	}
 
-	@org.springframework.context.annotation.Bean
-	public org.springframework.web.cors.reactive.CorsWebFilter corsWebFilter() {
-		org.springframework.web.cors.CorsConfiguration corsConfig = new org.springframework.web.cors.CorsConfiguration();
-		corsConfig.setAllowedOrigins(java.util.Arrays.asList("http://localhost:3000"));
-		corsConfig.setMaxAge(3600L);
-		corsConfig.addAllowedMethod("*");
-		corsConfig.addAllowedHeader("*");
-
-		org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource();
-		source.registerCorsConfiguration("/**", corsConfig);
-
-		return new org.springframework.web.cors.reactive.CorsWebFilter(source);
-	}
 }

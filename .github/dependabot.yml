@@ -1,0 +1,47 @@
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      maven-dependencies:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    groups:
+      frontend-dependencies:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /api-gateway
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /service-registry
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /question-service
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /quiz-service
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /frontend
+    schedule:
+      interval: weekly

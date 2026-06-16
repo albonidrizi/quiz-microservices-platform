@@ -1,112 +1,119 @@
 services:
   postgres:
-    image: postgres:15
-    container_name: postgres
-    restart: on-failure
+    image: postgres:15-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-121212}
-      POSTGRES_DB: ${POSTGRES_DB:-quizdb}
-    ports:
-      - "5432:5432"
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-dev-password}
+      POSTGRES_DB: quizdb
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d quizdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
       - quiz-network
 
   service-registry:
     build: ./service-registry
-    container_name: service-registry
-    restart: on-failure
+    restart: unless-stopped
     ports:
       - "8761:8761"
     environment:
-      - EUREKA_HOST=service-registry
+      EUREKA_HOST: service-registry
     networks:
       - quiz-network
 
   zipkin:
-    image: openzipkin/zipkin
-    container_name: zipkin
-    restart: on-failure
+    image: openzipkin/zipkin:3.4
+    restart: unless-stopped
     ports:
       - "9411:9411"
     networks:
       - quiz-network
 
   redis:
-    image: redis:alpine
-    container_name: redis
-    ports:
-      - "6379:6379"
-    networks:
-      - quiz-network
-
-  frontend:
-    build:
-      context: ./frontend
-    container_name: frontend
-    restart: on-failure
-    ports:
-      - "3000:80"
-    depends_on:
-      - api-gateway
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     networks:
       - quiz-network
 
   api-gateway:
     build: ./api-gateway
-    container_name: api-gateway
-    restart: on-failure
-    ports:
-      - "8765:8765"
+    restart: unless-stopped
     environment:
-      - EUREKA_HOST=service-registry
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=${ZIPKIN_URI:-http://zipkin:9411/api/v2/spans}
-      - SPRING_DATA_REDIS_HOST=redis
+      EUREKA_HOST: service-registry
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ${ZIPKIN_URI:-http://zipkin:9411/api/v2/spans}
+      SPRING_DATA_REDIS_HOST: redis
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost:3000}
+      TRACING_SAMPLING_PROBABILITY: ${TRACING_SAMPLING_PROBABILITY:-0.1}
     depends_on:
-      - service-registry
-      - zipkin
-      - redis
+      service-registry:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - quiz-network
 
   question-service:
     build: ./question-service
-    container_name: question-service
-    restart: on-failure
+    restart: unless-stopped
     environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USERNAME=${POSTGRES_USER:-postgres}
-      - DB_PASSWORD=${POSTGRES_PASSWORD:-121212}
-      - EUREKA_HOST=service-registry
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=${ZIPKIN_URI:-http://zipkin:9411/api/v2/spans}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-local-dev-password}
+      EUREKA_HOST: service-registry
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-local-dev-internal-key-change-me}
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ${ZIPKIN_URI:-http://zipkin:9411/api/v2/spans}
+      TRACING_SAMPLING_PROBABILITY: ${TRACING_SAMPLING_PROBABILITY:-0.1}
     depends_on:
-      - postgres
-      - service-registry
-      - zipkin
+      postgres:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
     networks:
       - quiz-network
 
   quiz-service:
     build: ./quiz-service
-    container_name: quiz-service
-    restart: on-failure
-    ports:
-      - "8090:8090"
+    restart: unless-stopped
     environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USERNAME=${POSTGRES_USER:-postgres}
-      - DB_PASSWORD=${POSTGRES_PASSWORD:-121212}
-      - EUREKA_HOST=service-registry
-      - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=${ZIPKIN_URI:-http://zipkin:9411/api/v2/spans}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-local-dev-password}
+      EUREKA_HOST: service-registry
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-local-dev-internal-key-change-me}
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: ${ZIPKIN_URI:-http://zipkin:9411/api/v2/spans}
+      TRACING_SAMPLING_PROBABILITY: ${TRACING_SAMPLING_PROBABILITY:-0.1}
     depends_on:
-      - postgres
-      - service-registry
-      - zipkin
+      postgres:
+        condition: service_healthy
+      service-registry:
+        condition: service_healthy
+      question-service:
+        condition: service_healthy
+    networks:
+      - quiz-network
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "3000:8080"
+    depends_on:
+      api-gateway:
+        condition: service_healthy
     networks:
       - quiz-network
 

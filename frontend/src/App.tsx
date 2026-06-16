@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import QuizList from './components/QuizList';
 import QuizGame from './components/QuizGame';
-import { Gamepad2, Trophy, Ghost } from 'lucide-react';
+import { Gamepad2, ShieldCheck } from 'lucide-react';
 
 function App() {
   return (
@@ -24,16 +24,13 @@ function App() {
             </h1>
           </Link>
 
-          <div className="flex gap-6 items-center">
+          <div className="flex gap-4 items-center">
             <Link to="/" className="text-gray-300 hover:text-white transition-colors flex items-center gap-1 font-medium text-sm">
-              <Ghost className="w-4 h-4" /> Quizzes
+              Quizzes
             </Link>
-            <div className="hidden md:flex items-center gap-1 text-gray-300 hover:text-white transition-colors font-medium text-sm cursor-not-allowed opacity-50">
-              <Trophy className="w-4 h-4" /> Leaderboard
+            <div className="hidden md:flex items-center gap-1 text-emerald-300 font-medium text-sm">
+              <ShieldCheck className="w-4 h-4" /> Protected scoring
             </div>
-            <button className="glass-button px-4 py-2 rounded-xl text-sm font-semibold text-cyan-300">
-              Login
-            </button>
           </div>
         </nav>
 

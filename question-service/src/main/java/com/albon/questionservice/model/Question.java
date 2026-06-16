@@ -1,5 +1,6 @@
 package com.albon.questionservice.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -11,13 +12,21 @@ public class Question {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    @Column(nullable = false, length = 500)
     private String questionTitle;
+    @Column(nullable = false)
     private String option1;
+    @Column(nullable = false)
     private String option2;
+    @Column(nullable = false)
     private String option3;
+    @Column(nullable = false)
     private String option4;
+    @Column(nullable = false)
     private String rightAnswer;
+    @Column(nullable = false, length = 50)
     private String difficultylevel;
+    @Column(nullable = false, length = 100)
     private String category;
 
     public Question() {

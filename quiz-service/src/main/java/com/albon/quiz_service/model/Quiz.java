@@ -10,9 +10,13 @@ public class Quiz {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    @Column(nullable = false)
     private String title;
 
     @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "quiz_question_ids", joinColumns = @JoinColumn(name = "quiz_id"))
+    @OrderColumn(name = "position")
+    @Column(name = "question_id", nullable = false)
     private List<Integer> questionIds;
 
     public Quiz() {
